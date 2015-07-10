@@ -1,11 +1,14 @@
 package org.dsa.iot.splunk.splunk;
 
-import com.splunk.*;
+import com.splunk.Service;
+import com.splunk.ServiceArgs;
+import com.splunk.TcpInput;
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.NodeBuilder;
 import org.dsa.iot.splunk.actions.CreateWatchGroupAction;
 import org.dsa.iot.splunk.actions.QueryAction;
 import org.dsa.iot.splunk.utils.LinkPair;
+import org.slf4j.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -18,6 +21,7 @@ import java.util.Map;
  */
 public class Splunk {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(Splunk.class);
     private LinkPair pair;
     private Node node;
 
@@ -69,7 +73,24 @@ public class Splunk {
 
     public Service getService() {
         if (svc == null) {
-            svc = Service.connect(args);
+            boolean thrown = true;
+            while (thrown) {
+                try {
+                    svc = Service.connect(args);
+                    thrown = false;
+
+                    String host = (String) args.get("host");
+                    host += ":" + args.get("port");
+                    LOGGER.info("Connected to splunk ({})", host);
+                } catch (Exception ex) {
+                    LOGGER.warn("Failed to connect to splunk");
+                    thrown = true;
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException ignored) {
+                    }
+                }
+            }
         }
         return svc;
     }
