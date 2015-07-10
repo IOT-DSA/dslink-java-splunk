@@ -6,10 +6,13 @@ import org.dsa.iot.dslink.node.NodeManager;
 import org.dsa.iot.dslink.node.Permission;
 import org.dsa.iot.dslink.node.actions.Action;
 import org.dsa.iot.dslink.node.actions.ActionResult;
+import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;
 import org.dsa.iot.splunk.actions.GetHistory;
 import org.dsa.iot.splunk.utils.LinkPair;
 import org.vertx.java.core.Handler;
+
+import java.util.Map;
 
 /**
  * Initializes data nodes.
@@ -43,9 +46,9 @@ public class DataNode {
     }
 
     public static Action getUnsubscribeAction(final WatchGroup group,
-                                            final Node watchNode,
-                                            final Node dataNode,
-                                            final String path) {
+                                              final Node watchNode,
+                                              final Node dataNode,
+                                              final String path) {
         return new Action(Permission.READ, new Handler<ActionResult>() {
             @Override
             public void handle(ActionResult event) {
@@ -54,6 +57,7 @@ public class DataNode {
 
                 watchNode.getParent().removeChild(watchNode);
                 dataNode.getParent().removeChild(dataNode);
+                cleanup(dataNode.getParent());
             }
         });
     }
@@ -67,12 +71,25 @@ public class DataNode {
                 Node node = event.getNode().getParent();
                 pair.getRequester().getRequester().unsubscribe(path, null);
                 node.getParent().removeChild(node);
-
+                cleanup(node.getParent());
                 Node watches = group.getWatches();
                 watches.removeChild(path.replaceAll("/", "%2F"));
             }
         });
     }
 
-
+    private static void cleanup(Node node) {
+        while (node != null) {
+            Value erasable = node.getRoConfig("erasable");
+            if (erasable != null && erasable.getBool()) {
+                break;
+            }
+            Map<String, Node> children = node.getChildren();
+            if (children != null && children.size() > 0) {
+                break;
+            }
+            node.getParent().removeChild(node);
+            node = node.getParent();
+        }
+    }
 }
