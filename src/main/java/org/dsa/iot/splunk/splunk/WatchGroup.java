@@ -142,13 +142,6 @@ public class WatchGroup {
 
         Watch watch = new Watch(this, builder.getChild(), path);
         watch.init();
-        Node node = builder.build();
-
-        builder = node.createChild("unsubscribe");
-        Node data = watch.getDataNode();
-        Action act = DataNode.getUnsubscribeAction(this, node, data, path);
-        builder.setAction(act);
-        builder.getChild().setSerializable(false);
         builder.build();
     }
 

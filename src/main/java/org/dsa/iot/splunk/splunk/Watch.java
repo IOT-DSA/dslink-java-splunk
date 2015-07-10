@@ -3,6 +3,8 @@ package org.dsa.iot.splunk.splunk;
 import com.splunk.*;
 import org.dsa.iot.dslink.link.Requester;
 import org.dsa.iot.dslink.node.Node;
+import org.dsa.iot.dslink.node.NodeBuilder;
+import org.dsa.iot.dslink.node.actions.Action;
 import org.dsa.iot.dslink.node.value.SubscriptionValue;
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValuePair;
@@ -51,6 +53,7 @@ public class Watch implements Handler<SubscriptionValue> {
         startNode = watchNode.createChild("startDate").build();
         endNode = watchNode.createChild("endDate").build();
 
+        initUnsubscribe();
         initRealTimeValue();
         initDbValue();
         initStartValue();
@@ -132,6 +135,20 @@ public class Watch implements Handler<SubscriptionValue> {
 
     private WatchGroup getGroup() {
         return group.get();
+    }
+
+    protected void initUnsubscribe() {
+        Node node = watchNode;
+        NodeBuilder b = node.createChild("unsubscribe");
+        b.setDisplayName("Unsubscribe");
+        {
+            Node data = getDataNode();
+            WatchGroup group = getGroup();
+            Action act = DataNode.getUnsubscribeAction(group, node, data, path);
+            b.setAction(act);
+        }
+        b.getChild().setSerializable(false);
+        b.build();
     }
 
     private void initRealTimeValue() {
