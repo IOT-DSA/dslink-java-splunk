@@ -5,7 +5,7 @@ import org.dsa.iot.dslink.node.actions.Action;
 import org.dsa.iot.dslink.node.actions.ActionResult;
 import org.dsa.iot.dslink.node.actions.Parameter;
 import org.dsa.iot.dslink.node.value.ValueType;
-import org.dsa.iot.splunk.etsdb.WatchGroup;
+import org.dsa.iot.splunk.splunk.WatchGroup;
 import org.vertx.java.core.Handler;
 
 /**

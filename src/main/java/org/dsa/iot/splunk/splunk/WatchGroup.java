@@ -1,4 +1,4 @@
-package org.dsa.iot.splunk.etsdb;
+package org.dsa.iot.splunk.splunk;
 
 import org.dsa.iot.dslink.link.Requester;
 import org.dsa.iot.dslink.node.Node;
@@ -13,7 +13,6 @@ import org.dsa.iot.dslink.node.value.ValueType;
 import org.dsa.iot.dslink.node.value.ValueUtils;
 import org.dsa.iot.dslink.util.Objects;
 import org.dsa.iot.splunk.actions.watch.AddWatchAction;
-import org.dsa.iot.splunk.splunk.Splunk;
 import org.dsa.iot.splunk.utils.LinkPair;
 import org.dsa.iot.splunk.utils.LoggingType;
 import org.dsa.iot.splunk.utils.PathValuePair;

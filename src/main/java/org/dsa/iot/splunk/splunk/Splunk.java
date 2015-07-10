@@ -5,7 +5,6 @@ import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.NodeBuilder;
 import org.dsa.iot.splunk.actions.CreateWatchGroupAction;
 import org.dsa.iot.splunk.actions.QueryAction;
-import org.dsa.iot.splunk.etsdb.WatchGroup;
 import org.dsa.iot.splunk.utils.LinkPair;
 
 import java.io.IOException;

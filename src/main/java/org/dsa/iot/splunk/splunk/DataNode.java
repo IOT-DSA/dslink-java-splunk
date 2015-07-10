@@ -1,4 +1,4 @@
-package org.dsa.iot.splunk.etsdb;
+package org.dsa.iot.splunk.splunk;
 
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.NodeBuilder;
@@ -73,4 +73,6 @@ public class DataNode {
             }
         });
     }
+
+
 }

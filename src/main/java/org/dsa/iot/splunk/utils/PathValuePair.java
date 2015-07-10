@@ -1,7 +1,7 @@
 package org.dsa.iot.splunk.utils;
 
 import org.dsa.iot.dslink.node.value.Value;
-import org.dsa.iot.splunk.etsdb.Watch;
+import org.dsa.iot.splunk.splunk.Watch;
 
 /**
  * @author Samuel Grenier

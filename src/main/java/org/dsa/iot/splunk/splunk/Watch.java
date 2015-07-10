@@ -1,4 +1,4 @@
-package org.dsa.iot.splunk.etsdb;
+package org.dsa.iot.splunk.splunk;
 
 import com.splunk.*;
 import org.dsa.iot.dslink.link.Requester;
@@ -7,7 +7,6 @@ import org.dsa.iot.dslink.node.value.SubscriptionValue;
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValuePair;
 import org.dsa.iot.dslink.node.value.ValueType;
-import org.dsa.iot.splunk.splunk.Splunk;
 import org.dsa.iot.splunk.utils.LinkPair;
 import org.dsa.iot.splunk.utils.PathValuePair;
 import org.dsa.iot.splunk.utils.TimeParser;
