@@ -5,6 +5,7 @@ import com.splunk.ServiceArgs;
 import com.splunk.TcpInput;
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.NodeBuilder;
+import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.splunk.actions.CreateWatchGroupAction;
 import org.dsa.iot.splunk.actions.QueryAction;
 import org.dsa.iot.splunk.utils.LinkPair;
@@ -40,10 +41,20 @@ public class Splunk {
         args.setScheme(node.getConfig("ssl").getBool() ? "https" : "http");
         args.setHost(node.getConfig("host").getString());
         args.setPort(node.getConfig("port").getNumber().intValue());
-        args.setUsername(node.getConfig("username").getString());
-        args.setPassword(new String(node.getPassword()));
-        input = node.getConfig("input").getString();
 
+        {
+            Value v = node.getConfig("username");
+            if (v != null) {
+                args.setUsername(v.getString());
+            }
+
+            char[] b = node.getPassword();
+            if (b != null) {
+                args.setPassword(new String(b));
+            }
+        }
+
+        input = node.getConfig("input").getString();
         Map<String, Node> children = node.getChildren();
         if (children != null) {
             for (Node child : children.values()) {

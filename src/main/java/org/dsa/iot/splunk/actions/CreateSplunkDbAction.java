@@ -37,15 +37,23 @@ public class CreateSplunkDbAction implements Handler<ActionResult> {
         int port = event.getParameter("port", ValueType.NUMBER).getNumber().intValue();
         boolean ssl = event.getParameter("ssl", ValueType.BOOL).getBool();
         String in = event.getParameter("input", ValueType.STRING).getString();
-        String user = event.getParameter("username", ValueType.STRING).getString();
-        String pass = event.getParameter("password", ValueType.STRING).getString();
+
+        {
+            Value vUser = event.getParameter("username");
+            if (vUser != null) {
+                child.setConfig("username", new Value(vUser.getString()));
+            }
+
+            Value vPass = event.getParameter("password");
+            if (vPass != null) {
+                child.setPassword(vPass.getString().toCharArray());
+            }
+        }
 
         child.setConfig("host", new Value(host));
         child.setConfig("port", new Value(port));
         child.setConfig("ssl", new Value(ssl));
         child.setConfig("input", new Value(in));
-        child.setConfig("username", new Value(user));
-        child.setPassword(pass.toCharArray());
         Splunk splunk = new Splunk(pair, child);
         splunk.init();
     }
