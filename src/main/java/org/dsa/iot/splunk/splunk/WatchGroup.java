@@ -209,7 +209,9 @@ public class WatchGroup {
     }
 
     private void createDataTracker() {
-        data = watchGroup.createChild("data").build();
+        NodeBuilder b = watchGroup.createChild("data");
+        b.setRoConfig("erasable", new Value(true));
+        data = b.build();
         data.setSerializable(false);
     }
 

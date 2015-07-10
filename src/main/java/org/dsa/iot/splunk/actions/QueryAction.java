@@ -43,7 +43,6 @@ public class QueryAction implements Handler<ActionResult> {
             realTime = v.getBool();
         }
 
-        boolean refresh = false;
         if (!realTime) {
             Value v = event.getParameter("Earliest Time", ValueType.STRING);
             jea.setEarliestTime(v.getString());
@@ -53,7 +52,6 @@ public class QueryAction implements Handler<ActionResult> {
             jea.setLatestTime(lt);
             if ("rt".equals(lt)) {
                 realTime = true;
-                refresh = true;
                 event.getTable().setMode(Table.Mode.REFRESH);
             }
         }

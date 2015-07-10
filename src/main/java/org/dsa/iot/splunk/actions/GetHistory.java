@@ -97,26 +97,6 @@ public class GetHistory implements Handler<ActionResult> {
                 }
             }
         }
-
-        /*db.query(path, from, to, new QueryCallback<Value>() {
-            @Override
-            public void sample(String seriesId, long ts, Value value) {
-                JsonArray update;
-                if (interval == null) {
-                    update = new JsonArray();
-                    update.addString(TimeParser.parse(ts));
-                    ValueUtils.toJson(update, value);
-                } else {
-                    update = interval.getRowUpdate(value, ts);
-                }
-
-                if (update != null) {
-                    updates.addArray(update);
-                }
-            }
-        });
-        */
-        //event.setUpdates(updates);
     }
 
     public static Action make(Node data, Node parent, Splunk splunk) {
