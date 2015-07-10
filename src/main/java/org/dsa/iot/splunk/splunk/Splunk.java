@@ -11,7 +11,6 @@ import org.dsa.iot.splunk.actions.QueryAction;
 import org.dsa.iot.splunk.utils.LinkPair;
 import org.slf4j.*;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
@@ -106,20 +105,28 @@ public class Splunk {
         return svc;
     }
 
+    public void kill() {
+        svc = null;
+    }
+
     public OutputStreamWriter getWriter() {
         if (svc == null) {
-            svc = Service.connect(args);
+            svc = getService();
         } else if (writer != null) {
             return writer;
         }
 
-        TcpInput in = (TcpInput) svc.getInputs().get(input);
         try {
+            TcpInput in = (TcpInput) svc.getInputs().get(input);
             Socket sock = in.attach();
             OutputStream stream = sock.getOutputStream();
             return writer = new OutputStreamWriter(stream, "UTF-8");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException ignored) {
+            }
+            return getWriter();
         }
     }
 }
