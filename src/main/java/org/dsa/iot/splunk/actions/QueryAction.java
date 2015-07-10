@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Samuel Grenier
@@ -43,6 +42,7 @@ public class QueryAction implements Handler<ActionResult> {
             realTime = v.getBool();
         }
 
+        boolean windowSend = false;
         if (!realTime) {
             Value v = event.getParameter("Earliest Time", ValueType.STRING);
             jea.setEarliestTime(v.getString());
@@ -52,6 +52,7 @@ public class QueryAction implements Handler<ActionResult> {
             jea.setLatestTime(lt);
             if ("rt".equals(lt)) {
                 realTime = true;
+                windowSend = true;
                 event.getTable().setMode(Table.Mode.REFRESH);
             }
         }
@@ -73,6 +74,14 @@ public class QueryAction implements Handler<ActionResult> {
 
         final CountDownLatch latch = new CountDownLatch(1);
         Thread thread = new Thread(new Runnable() {
+
+            private boolean windowSend;
+
+            private Runnable setWindowSend(boolean send) {
+                this.windowSend = send;
+                return this;
+            }
+
             @Override
             public void run() {
                 InputStream stream = service.export(query, jea);
@@ -91,26 +100,34 @@ public class QueryAction implements Handler<ActionResult> {
                     if (results == null) {
                         continue;
                     }
-                    BatchRow row = new BatchRow();
+                    BatchRow row = null;
+                    if (windowSend) {
+                        row = new BatchRow();
+                    }
                     for (Event e : results) {
                         if (!columnsSet) {
                             columnsSet = true;
                             cols = setColumns(table, e);
                             latch.countDown();
                         }
-                        row.addRow(processRow(cols, e));
+
+                        if (windowSend && row != null) {
+                            row.addRow(processRow(cols, e));
+                        } else {
+                            table.addRow(processRow(cols, e));
+                        }
                     }
-                    table.addBatchRows(row);
+                    if (windowSend && row != null) {
+                        table.addBatchRows(row);
+                    }
                 }
 
                 table.close();
             }
-        });
+        }.setWindowSend(windowSend));
         thread.start();
         try {
-            if (!latch.await(10, TimeUnit.SECONDS)) {
-                throw new RuntimeException("No data in query");
-            }
+            latch.await();
         } catch (InterruptedException ignored) {
         }
     }

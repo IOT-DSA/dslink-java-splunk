@@ -17,6 +17,7 @@ import org.dsa.iot.splunk.utils.LinkPair;
 import org.dsa.iot.splunk.utils.LoggingType;
 import org.dsa.iot.splunk.utils.PathValuePair;
 import org.dsa.iot.splunk.utils.TimeParser;
+import org.slf4j.LoggerFactory;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.json.JsonObject;
 
@@ -343,10 +344,10 @@ public class WatchGroup {
         OutputStreamWriter writer = splunk.getWriter();
         try {
             JsonObject obj = new JsonObject();
+            obj.putNumber("timestamp", time);
             obj.putString("path", path);
-            obj.putNumber("time", time);
             ValueUtils.toJson(obj, "value", value);
-            writer.write(obj.encodePrettily());
+            writer.write(obj.encode());
             writer.write("\r\n");
             writer.flush();
         } catch (IOException e) {
