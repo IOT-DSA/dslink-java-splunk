@@ -1,5 +1,5 @@
 {
-  "name": "splunk",
+  "name": "dslink-java-splunk",
   "version": "0.0.1",
   "description": "DSLink for Splunk",
   "license": "Apache",
