@@ -24,17 +24,45 @@ public class Main extends DSLinkHandler {
     private final LinkPair pair = new LinkPair();
 
     @Override
+    public boolean isResponder() {
+        return true;
+    }
+
+    @Override
+    public boolean isRequester() {
+        return true;
+    }
+
+    @Override
+    public void preInit() {
+        // Splunk is insecure and requires use of SSLv3
+        Security.setProperty("jdk.tls.disabledAlgorithms", "");
+    }
+
+    @Override
+    public void stop() {
+        super.stop();
+        DSLink link = pair.getResponder();
+        if (link != null) {
+            Node node = link.getNodeManager().getSuperRoot();
+            Map<String, Node> children = node.getChildren();
+            if (children != null) {
+                for (Node child : children.values()) {
+                    Splunk splunk = child.getMetaData();
+                    if (splunk != null) {
+                        splunk.stop();
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
     public void onResponderInitialized(DSLink link) {
         pair.setResponder(link);
         NodeManager manager = link.getNodeManager();
         Node node = manager.getSuperRoot();
         initResponderActions(node);
-
-        // DEBUG comment
-        //node = manager.getNode("/defs/profile/getHistory_", true).getNode();
-        //GetHistory.initProfile(node);
-        //node = manager.getSuperRoot().getChild("defs");
-        //node.setSerializable(false);
     }
 
     @Override
@@ -70,8 +98,6 @@ public class Main extends DSLinkHandler {
     }
 
     public static void main(String[] args) {
-        // Splunk is insecure and requires use of SSLv3
-        Security.setProperty("jdk.tls.disabledAlgorithms", "");
-        DSLinkFactory.startDual("splunk", args, new Main());
+        DSLinkFactory.start(args, new Main());
     }
 }

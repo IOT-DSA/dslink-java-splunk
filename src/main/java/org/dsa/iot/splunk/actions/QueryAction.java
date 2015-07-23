@@ -11,6 +11,7 @@ import org.dsa.iot.dslink.node.actions.table.BatchRow;
 import org.dsa.iot.dslink.node.actions.table.Row;
 import org.dsa.iot.dslink.node.actions.table.Table;
 import org.dsa.iot.dslink.node.value.*;
+import org.dsa.iot.dslink.util.Objects;
 import org.dsa.iot.splunk.splunk.Splunk;
 import org.vertx.java.core.Handler;
 
@@ -73,7 +74,7 @@ public class QueryAction implements Handler<ActionResult> {
         final Service service = splunk.getService();
 
         final CountDownLatch latch = new CountDownLatch(1);
-        Thread thread = new Thread(new Runnable() {
+        Objects.getDaemonThreadPool().execute(new Runnable() {
 
             private boolean windowSend;
 
@@ -99,12 +100,18 @@ public class QueryAction implements Handler<ActionResult> {
                 for (SearchResults results : r) {
                     if (results == null) {
                         continue;
+                    } else if (!splunk.isRunning()) {
+                        break;
                     }
                     BatchRow row = null;
                     if (windowSend) {
                         row = new BatchRow();
                     }
                     for (Event e : results) {
+                        if (!splunk.isRunning()) {
+                            row = null;
+                            break;
+                        }
                         if (!columnsSet) {
                             columnsSet = true;
                             cols = setColumns(table, e);
@@ -125,7 +132,6 @@ public class QueryAction implements Handler<ActionResult> {
                 table.close();
             }
         }.setWindowSend(windowSend));
-        thread.start();
         try {
             latch.await();
         } catch (InterruptedException ignored) {

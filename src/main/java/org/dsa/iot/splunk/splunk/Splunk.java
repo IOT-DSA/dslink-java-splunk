@@ -30,10 +30,27 @@ public class Splunk {
     private Service svc;
     private String input;
     private OutputStreamWriter writer;
+    private boolean running = true;
 
     public Splunk(LinkPair pair, Node node) {
+        node.setMetaData(this);
         this.pair = pair;
         this.node = node;
+    }
+
+    public void stop() {
+        running = false;
+        if (writer != null) {
+            try {
+                writer.close();
+            } catch (IOException ignored) {
+            }
+        }
+        kill();
+    }
+
+    public boolean isRunning() {
+        return running;
     }
 
     public void init() {
@@ -111,6 +128,9 @@ public class Splunk {
     }
 
     public OutputStreamWriter getWriter() {
+        if (!running) {
+            return null;
+        }
         if (svc == null) {
             svc = getService();
         } else if (writer != null) {
@@ -124,7 +144,7 @@ public class Splunk {
             return writer = new OutputStreamWriter(stream, "UTF-8");
         } catch (IOException e) {
             try {
-                Thread.sleep(5000);
+                Thread.sleep(4000);
             } catch (InterruptedException ignored) {
             }
             return getWriter();
