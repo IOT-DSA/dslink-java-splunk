@@ -17,8 +17,9 @@ import org.vertx.java.core.Handler;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 /**
  * @author Samuel Grenier
@@ -73,7 +74,6 @@ public class QueryAction implements Handler<ActionResult> {
         final String query = v.getString();
         final Service service = splunk.getService();
 
-        final CountDownLatch latch = new CountDownLatch(1);
         Objects.getDaemonThreadPool().execute(new Runnable() {
 
             private boolean windowSend;
@@ -94,8 +94,8 @@ public class QueryAction implements Handler<ActionResult> {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-                List<Parameter> cols = null;
-                boolean columnsSet = false;
+                List<String> names = new ArrayList<>();
+                List<Parameter> cols = new LinkedList<>();
 
                 for (SearchResults results : r) {
                     if (results == null) {
@@ -103,6 +103,7 @@ public class QueryAction implements Handler<ActionResult> {
                     } else if (!splunk.isRunning()) {
                         break;
                     }
+                    List<Parameter> added = null;
                     BatchRow row = null;
                     if (windowSend) {
                         row = new BatchRow();
@@ -112,38 +113,47 @@ public class QueryAction implements Handler<ActionResult> {
                             row = null;
                             break;
                         }
-                        if (!columnsSet) {
-                            columnsSet = true;
-                            cols = setColumns(table, e);
-                            latch.countDown();
+                        List<Parameter> tmp = setColumns(names, cols, table, e);
+                        if (added != null && tmp != null) {
+                            added.addAll(tmp);
+                        } else {
+                            added = tmp;
                         }
 
                         if (windowSend && row != null) {
                             row.addRow(processRow(cols, e));
                         } else {
-                            table.addRow(processRow(cols, e));
+                            table.addRow(added, processRow(cols, e));
                         }
                     }
                     if (windowSend && row != null) {
-                        table.addBatchRows(row);
+                        table.addBatchRows(added, row);
                     }
                 }
 
                 table.close();
             }
         }.setWindowSend(windowSend));
-        try {
-            latch.await();
-        } catch (InterruptedException ignored) {
-        }
     }
 
-    private List<Parameter> setColumns(Table t, Event e) {
-        for (String s : e.keySet()) {
-            Parameter p = new Parameter(s, ValueType.STRING);
-            t.addColumn(p);
+    private List<Parameter> setColumns(List<String> names,
+                            List<Parameter> cols,
+                            Table table,
+                            Event event) {
+        List<Parameter> added = null;
+        for (String s : event.keySet()) {
+            if (!names.contains(s)) {
+                names.add(s);
+                Parameter p = new Parameter(s, ValueType.STRING);
+                table.addColumn(p);
+                cols.add(p);
+                if (added == null) {
+                    added = new LinkedList<>();
+                }
+                added.add(p);
+            }
         }
-        return t.getColumns();
+        return added;
     }
 
     private Row processRow(List<Parameter> cols, Event e) {
