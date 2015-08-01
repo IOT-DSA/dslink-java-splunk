@@ -114,10 +114,12 @@ public class QueryAction implements Handler<ActionResult> {
                             break;
                         }
                         List<Parameter> tmp = setColumns(names, cols, table, e);
-                        if (added != null && tmp != null) {
-                            added.addAll(tmp);
-                        } else {
-                            added = tmp;
+                        if (!windowSend) {
+                            if (added != null && tmp != null) {
+                                added.addAll(tmp);
+                            } else {
+                                added = tmp;
+                            }
                         }
 
                         if (windowSend && row != null) {
@@ -127,7 +129,7 @@ public class QueryAction implements Handler<ActionResult> {
                         }
                     }
                     if (windowSend && row != null) {
-                        table.addBatchRows(added, row);
+                        table.addBatchRows(cols, row);
                     }
                 }
 
