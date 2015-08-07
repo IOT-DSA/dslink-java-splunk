@@ -80,7 +80,7 @@ public class Main extends DSLinkHandler {
         }
 
         for (Node group : children.values()) {
-            if (group.getAction() != null
+            if (group == null || group.getAction() != null
                     || "defs".equals(group.getName())) {
                 continue;
             }
@@ -89,7 +89,8 @@ public class Main extends DSLinkHandler {
                 Splunk splunk = new Splunk(pair, group);
                 splunk.init();
             } catch (Exception e) {
-                LOGGER.error("Error initializing splunk", e);
+                String name = group.getPath();
+                LOGGER.error("Error initializing splunk: {}", e, name);
             }
         }
     }
