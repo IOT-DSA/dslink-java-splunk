@@ -31,6 +31,7 @@ public class Splunk {
     private String input;
     private OutputStreamWriter writer;
     private boolean running = true;
+    private boolean writerEnabled = false;
 
     public Splunk(LinkPair pair, Node node) {
         node.setMetaData(this);
@@ -71,16 +72,22 @@ public class Splunk {
             }
         }
 
-        input = node.getConfig("input").getString();
-        Map<String, Node> children = node.getChildren();
-        if (children != null) {
-            for (Node child : children.values()) {
-                if (child.getAction() != null) {
-                    continue;
+        Value vIn = node.getConfig("input");
+        if (vIn != null) {
+            writerEnabled = true;
+            input = vIn.getString();
+            Map<String, Node> children = node.getChildren();
+            if (children != null) {
+                for (Node child : children.values()) {
+                    if (child.getAction() != null) {
+                        continue;
+                    }
+                    WatchGroup group = new WatchGroup(this, child, pair);
+                    group.init(true);
                 }
-                WatchGroup group = new WatchGroup(this, child, pair);
-                group.init(true);
             }
+        } else {
+            writerEnabled = false;
         }
 
         {
@@ -128,7 +135,7 @@ public class Splunk {
     }
 
     public OutputStreamWriter getWriter() {
-        if (!running) {
+        if (!(running || writerEnabled)) {
             return null;
         }
         if (svc == null) {
