@@ -5,11 +5,15 @@ import com.splunk.ServiceArgs;
 import com.splunk.TcpInput;
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.NodeBuilder;
+import org.dsa.iot.dslink.node.Permission;
+import org.dsa.iot.dslink.node.actions.Action;
+import org.dsa.iot.dslink.node.actions.ActionResult;
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.splunk.actions.CreateWatchGroupAction;
 import org.dsa.iot.splunk.actions.QueryAction;
 import org.dsa.iot.splunk.utils.LinkPair;
 import org.slf4j.*;
+import org.vertx.java.core.Handler;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -100,8 +104,26 @@ public class Splunk {
         {
             NodeBuilder builder = node.createChild("query");
             builder.setDisplayName("Query");
-            builder.getChild().setSerializable(false);
+            builder.setSerializable(false);
             builder.setAction(QueryAction.make(this));
+            builder.build();
+        }
+        {
+            NodeBuilder builder = node.createChild("delete");
+            builder.setDisplayName("Delete Server");
+            builder.setSerializable(false);
+            builder.setAction(new Action(Permission.READ,
+                    new Handler<ActionResult>() {
+                        @Override
+                        public void handle(ActionResult event) {
+                            try {
+                                stop();
+                            } catch (RuntimeException ignored) {
+                            }
+                            Node node = event.getNode().getParent();
+                            node.getParent().removeChild(node);
+                        }
+                    }));
             builder.build();
         }
     }
