@@ -85,14 +85,19 @@ public class Main extends DSLinkHandler {
                 continue;
             }
 
-            Splunk splunk = new Splunk(pair, group);
-            splunk.init();
+            try {
+                Splunk splunk = new Splunk(pair, group);
+                splunk.init();
+            } catch (Exception e) {
+                LOGGER.error("Error initializing splunk", e);
+            }
         }
     }
 
     private void initResponderActions(Node parent) {
         NodeBuilder builder = parent.createChild("createSplunkDatabase");
         builder.setDisplayName("Create Splunk Database");
+        builder.setSerializable(false);
         builder.setAction(CreateSplunkDbAction.make(pair, parent));
         builder.build();
     }
