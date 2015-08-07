@@ -34,6 +34,7 @@ public class QueryAction implements Handler<ActionResult> {
 
     @Override
     public void handle(final ActionResult event) {
+        final Table table = event.getTable();
         final JobExportArgs jea = new JobExportArgs();
         jea.setOutputMode(JobExportArgs.OutputMode.XML);
         event.setStreamState(StreamState.OPEN);
@@ -46,6 +47,7 @@ public class QueryAction implements Handler<ActionResult> {
 
         boolean windowSend = false;
         if (!realTime) {
+            table.setMode(Table.Mode.APPEND);
             Value v = event.getParameter("Earliest Time", ValueType.STRING);
             jea.setEarliestTime(v.getString());
 
@@ -55,7 +57,7 @@ public class QueryAction implements Handler<ActionResult> {
             if ("rt".equals(lt)) {
                 realTime = true;
                 windowSend = true;
-                event.getTable().setMode(Table.Mode.REFRESH);
+                table.setMode(Table.Mode.REFRESH);
             }
         }
 
@@ -86,7 +88,6 @@ public class QueryAction implements Handler<ActionResult> {
             @Override
             public void run() {
                 InputStream stream = service.export(query, jea);
-                Table table = event.getTable();
                 MultiResultsReaderXml r;
                 try {
                     r = new MultiResultsReaderXml(stream);
