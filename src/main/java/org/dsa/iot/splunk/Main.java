@@ -6,6 +6,7 @@ import org.dsa.iot.dslink.DSLinkHandler;
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.NodeBuilder;
 import org.dsa.iot.dslink.node.NodeManager;
+import org.dsa.iot.dslink.util.Objects;
 import org.dsa.iot.splunk.actions.CreateSplunkDbAction;
 import org.dsa.iot.splunk.splunk.Splunk;
 import org.dsa.iot.splunk.utils.LinkPair;
@@ -86,8 +87,13 @@ public class Main extends DSLinkHandler {
             }
 
             try {
-                Splunk splunk = new Splunk(pair, group);
-                splunk.init();
+                final Splunk splunk = new Splunk(pair, group);
+                Objects.getDaemonThreadPool().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        splunk.init();
+                    }
+                });
             } catch (Exception e) {
                 String name = group.getPath();
                 LOGGER.error("Error initializing splunk: {}", name, e);

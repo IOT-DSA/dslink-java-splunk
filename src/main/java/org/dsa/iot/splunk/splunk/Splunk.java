@@ -59,6 +59,39 @@ public class Splunk {
     }
 
     public void init() {
+        {
+            NodeBuilder builder = node.createChild("createWatchGroup");
+            builder.setDisplayName("Create Watch Group");
+            builder.setAction(CreateWatchGroupAction.make(this, node, pair));
+            builder.setSerializable(false);
+            builder.build();
+        }
+        {
+            NodeBuilder builder = node.createChild("query");
+            builder.setDisplayName("Query");
+            builder.setSerializable(false);
+            builder.setAction(QueryAction.make(this));
+            builder.build();
+        }
+        {
+            NodeBuilder builder = node.createChild("delete");
+            builder.setDisplayName("Delete Server");
+            builder.setSerializable(false);
+            builder.setAction(new Action(Permission.READ,
+                    new Handler<ActionResult>() {
+                        @Override
+                        public void handle(ActionResult event) {
+                            try {
+                                stop();
+                            } catch (RuntimeException ignored) {
+                            }
+                            Node node = event.getNode().getParent();
+                            node.getParent().removeChild(node);
+                        }
+                    }));
+            builder.build();
+        }
+
         args = new ServiceArgs();
         args.setScheme(node.getConfig("ssl").getBool() ? "https" : "http");
         args.setHost(node.getConfig("host").getString());
@@ -93,42 +126,12 @@ public class Splunk {
         } else {
             writerEnabled = false;
         }
-
-        {
-            NodeBuilder builder = node.createChild("createWatchGroup");
-            builder.setDisplayName("Create Watch Group");
-            builder.setAction(CreateWatchGroupAction.make(this, node, pair));
-            builder.getChild().setSerializable(false);
-            builder.build();
-        }
-        {
-            NodeBuilder builder = node.createChild("query");
-            builder.setDisplayName("Query");
-            builder.setSerializable(false);
-            builder.setAction(QueryAction.make(this));
-            builder.build();
-        }
-        {
-            NodeBuilder builder = node.createChild("delete");
-            builder.setDisplayName("Delete Server");
-            builder.setSerializable(false);
-            builder.setAction(new Action(Permission.READ,
-                    new Handler<ActionResult>() {
-                        @Override
-                        public void handle(ActionResult event) {
-                            try {
-                                stop();
-                            } catch (RuntimeException ignored) {
-                            }
-                            Node node = event.getNode().getParent();
-                            node.getParent().removeChild(node);
-                        }
-                    }));
-            builder.build();
-        }
     }
 
     public Service getService() {
+        if (!running) {
+            return null;
+        }
         if (svc == null) {
             boolean thrown = true;
             while (thrown) {
