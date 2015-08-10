@@ -90,7 +90,7 @@ public class Main extends DSLinkHandler {
                 splunk.init();
             } catch (Exception e) {
                 String name = group.getPath();
-                LOGGER.error("Error initializing splunk: {}", e, name);
+                LOGGER.error("Error initializing splunk: {}", name, e);
             }
         }
     }

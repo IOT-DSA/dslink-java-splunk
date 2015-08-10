@@ -30,7 +30,7 @@ idea {
 
 dependencies {
     provided 'com.google.code.findbugs:annotations:3.0.0'
-    compile 'org.iot-dsa:dslink:0.7.0'
+    compile 'org.iot-dsa:dslink:0.8.0-SNAPSHOT'
 
     // Splunk dependencies
     compile 'com.splunk:splunk:1.4.0.0'
