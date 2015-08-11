@@ -135,6 +135,7 @@ public class QueryAction implements Handler<ActionResult> {
                 }
 
                 table.close();
+                close(reader);
             }
         }.setWindowSend(windowSend));
     }
