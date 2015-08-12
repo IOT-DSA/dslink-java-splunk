@@ -37,6 +37,7 @@ public class QueryAction implements Handler<ActionResult> {
         final Table table = event.getTable();
         final JobExportArgs jea = new JobExportArgs();
         jea.setOutputMode(JobExportArgs.OutputMode.XML);
+        jea.add("preview", false);
         event.setStreamState(StreamState.OPEN);
 
         boolean realTime;
@@ -48,16 +49,20 @@ public class QueryAction implements Handler<ActionResult> {
         boolean windowSend = false;
         if (!realTime) {
             table.setMode(Table.Mode.APPEND);
-            Value v = event.getParameter("Earliest Time", ValueType.STRING);
-            jea.setEarliestTime(v.getString());
+            Value v = event.getParameter("Earliest Time");
+            if (v != null) {
+                jea.setEarliestTime(v.getString());
+            }
 
-            v = event.getParameter("Latest Time", ValueType.STRING);
-            String lt = v.getString();
-            jea.setLatestTime(lt);
-            if ("rt".equals(lt)) {
-                realTime = true;
-                windowSend = true;
-                table.setMode(Table.Mode.REFRESH);
+            v = event.getParameter("Latest Time");
+            if (v != null) {
+                String lt = v.getString();
+                jea.setLatestTime(lt);
+                if ("rt".equals(lt)) {
+                    realTime = true;
+                    windowSend = true;
+                    table.setMode(Table.Mode.REFRESH);
+                }
             }
         }
 
