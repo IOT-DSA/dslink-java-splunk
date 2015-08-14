@@ -79,7 +79,6 @@ public class QueryAction implements Handler<ActionResult> {
 
         Value v = event.getParameter("Query", ValueType.STRING);
         final String query = v.getString();
-        final Service service = splunk.getService();
 
         Objects.getDaemonThreadPool().execute(new Runnable() {
 
@@ -92,7 +91,18 @@ public class QueryAction implements Handler<ActionResult> {
 
             @Override
             public void run() {
-                InputStream stream = service.export(query, jea);
+                Service service;
+                InputStream stream;
+                try {
+                    service = splunk.getService();
+                    stream = service.export(query, jea);
+                } catch (HttpException e) {
+                    if (e.getMessage().contains("HTTP 401")) {
+                        splunk.kill();
+                    }
+                    service = splunk.getService();
+                    stream = service.export(query, jea);
+                }
                 MultiResultsReaderXml r;
                 try {
                     r = new MultiResultsReaderXml(stream);
