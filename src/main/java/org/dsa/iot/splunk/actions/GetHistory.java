@@ -34,7 +34,7 @@ public class GetHistory implements Handler<ActionResult> {
     }
 
     @Override
-    public void handle(ActionResult event) {
+    public void handle(final ActionResult event) {
         String range = event.getParameter("Timerange").getString();
         String[] split = range.split("/");
 
@@ -55,48 +55,52 @@ public class GetHistory implements Handler<ActionResult> {
         final String sRollup = event.getParameter("Rollup").getString();
         final Interval interval = Interval.parse(sInterval, sRollup);
 
-        String query = "search path=\"%s\"";
-        query += "| spath time | spath value";
-        query += "| where time >= %d and time <= %d";
-        query += "| sort time";
-        query += "| table _raw";
-        query = String.format(query, path, from, to);
+        String q = "search path=\"%s\"";
+        q += "| spath time | spath value";
+        q += "| where time >= %d and time <= %d";
+        q += "| sort time";
+        q += "| table _raw";
+        final String query = String.format(q, path, from, to);
 
-        Service service = splunk.getService();
-        InputStream stream = service.export(query);
-        MultiResultsReaderXml reader = null;
-        try {
-            Table t = event.getTable();
-            reader = new MultiResultsReaderXml(stream);
-            for (SearchResults res : reader) {
-                for (Event e : res) {
-                    JsonObject obj = new JsonObject(e.get("_raw"));
+        splunk.getService(new Handler<Service>() {
+            @Override
+            public void handle(Service service) {
+                InputStream stream = service.export(query);
+                MultiResultsReaderXml reader = null;
+                try {
+                    Table t = event.getTable();
+                    reader = new MultiResultsReaderXml(stream);
+                    for (SearchResults res : reader) {
+                        for (Event e : res) {
+                            JsonObject obj = new JsonObject(e.get("_raw"));
 
-                    long ms = obj.getLong("time");
-                    Object v = obj.getField("value");
-                    Value val = ValueUtils.toValue(v);
+                            long ms = obj.getLong("time");
+                            Object v = obj.getField("value");
+                            Value val = ValueUtils.toValue(v);
 
-                    if (interval == null) {
-                        String time = TimeParser.parse(ms);
-                        Value tVal = new Value(time);
-                        t.addRow(Row.make(tVal, val));
-                    } else {
-                        Row r = interval.getRowUpdate(val, ms);
-                        if (r != null) {
-                            t.addRow(r);
+                            if (interval == null) {
+                                String time = TimeParser.parse(ms);
+                                Value tVal = new Value(time);
+                                t.addRow(Row.make(tVal, val));
+                            } else {
+                                Row r = interval.getRowUpdate(val, ms);
+                                if (r != null) {
+                                    t.addRow(r);
+                                }
+                            }
+                        }
+                    }
+                } catch (IOException ignored) {
+                } finally {
+                    if (reader != null) {
+                        try {
+                            reader.close();
+                        } catch (IOException ignored) {
                         }
                     }
                 }
             }
-        } catch (IOException ignored) {
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException ignored) {
-                }
-            }
-        }
+        });
     }
 
     public static Action make(Node data, Node parent, Splunk splunk) {

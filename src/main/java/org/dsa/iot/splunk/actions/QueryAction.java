@@ -91,66 +91,60 @@ public class QueryAction implements Handler<ActionResult> {
 
             @Override
             public void run() {
-                Service service;
-                InputStream stream;
-                try {
-                    service = splunk.getService();
-                    stream = service.export(query, jea);
-                } catch (HttpException e) {
-                    if (e.getMessage().contains("HTTP 401")) {
-                        splunk.kill();
-                    }
-                    service = splunk.getService();
-                    stream = service.export(query, jea);
-                }
-                MultiResultsReaderXml r;
-                try {
-                    r = new MultiResultsReaderXml(stream);
-                    reader.set(r);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                List<String> names = new ArrayList<>();
-                List<Parameter> cols = new LinkedList<>();
-
-                for (SearchResults results : r) {
-                    if (results == null) {
-                        continue;
-                    } else if (!splunk.isRunning()) {
-                        break;
-                    }
-                    List<Parameter> added = null;
-                    BatchRow row = null;
-                    if (windowSend) {
-                        row = new BatchRow();
-                    }
-                    for (Event e : results) {
-                        if (!splunk.isRunning()) {
-                            row = null;
-                            break;
+                final List<String> names = new ArrayList<>();
+                final List<Parameter> cols = new LinkedList<>();
+                splunk.getService(new Handler<Service>() {
+                    @Override
+                    public void handle(Service service) {
+                        InputStream stream = service.export(query, jea);
+                        MultiResultsReaderXml r;
+                        try {
+                            r = new MultiResultsReaderXml(stream);
+                            reader.set(r);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
                         }
-                        List<Parameter> tmp = setColumns(names, cols, table, e);
-                        if (!windowSend) {
-                            if (added != null && tmp != null) {
-                                added.addAll(tmp);
-                            } else {
-                                added = tmp;
+
+                        for (SearchResults results : r) {
+                            if (results == null) {
+                                continue;
+                            } else if (!splunk.isRunning()) {
+                                break;
+                            }
+                            List<Parameter> added = null;
+                            BatchRow row = null;
+                            if (windowSend) {
+                                row = new BatchRow();
+                            }
+                            for (Event e : results) {
+                                if (!splunk.isRunning()) {
+                                    row = null;
+                                    break;
+                                }
+                                List<Parameter> tmp = setColumns(names, cols, table, e);
+                                if (!windowSend) {
+                                    if (added != null && tmp != null) {
+                                        added.addAll(tmp);
+                                    } else {
+                                        added = tmp;
+                                    }
+                                }
+
+                                if (windowSend && row != null) {
+                                    row.addRow(processRow(cols, e));
+                                } else {
+                                    table.addRow(added, processRow(cols, e));
+                                }
+                            }
+                            if (windowSend && row != null) {
+                                table.addBatchRows(cols, row);
                             }
                         }
 
-                        if (windowSend && row != null) {
-                            row.addRow(processRow(cols, e));
-                        } else {
-                            table.addRow(added, processRow(cols, e));
-                        }
+                        table.close();
+                        close(reader);
                     }
-                    if (windowSend && row != null) {
-                        table.addBatchRows(cols, row);
-                    }
-                }
-
-                table.close();
-                close(reader);
+                });
             }
         }.setWindowSend(windowSend));
     }

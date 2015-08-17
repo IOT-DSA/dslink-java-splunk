@@ -171,35 +171,41 @@ public class Watch implements Handler<SubscriptionValue> {
         // Grab the first value
         WatchGroup group = getGroup();
         Splunk splunk = group.getSplunk();
-        Service service = splunk.getService();
+        splunk.getService(new Handler<Service>() {
+            @Override
+            public void handle(Service service) {
+                String query = "search path=\"%s\"";
+                query += "| where time > 0";
+                query += "| tail 1";
+                query += "| table time";
+                query = String.format(query, path);
 
-        String query = "search path=\"%s\" | where time > 0 | tail 1 | table time";
-        query = String.format(query, path);
+                Job job = service.search(query);
+                while (!job.isDone()) {
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
 
-        Job job = service.search(query);
-        while (!job.isDone()) {
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                JobResultsArgs jra = new JobResultsArgs();
+                jra.setOutputMode(JobResultsArgs.OutputMode.XML);
+
+                InputStream results = job.getResults(jra);
+                try {
+                    ResultsReader reader = new ResultsReaderXml(results);
+                    Event e = reader.getNextEvent();
+                    if (e != null) {
+                        long time = Long.parseLong(e.get("time"));
+                        String ts = TimeParser.parse(time);
+                        startNode.setValue(new Value(ts));
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
-        }
-
-        JobResultsArgs jra = new JobResultsArgs();
-        jra.setOutputMode(JobResultsArgs.OutputMode.XML);
-
-        InputStream results = job.getResults(jra);
-        try {
-            ResultsReader reader = new ResultsReaderXml(results);
-            Event e = reader.getNextEvent();
-            if (e != null) {
-                long time = Long.parseLong(e.get("time"));
-                String ts = TimeParser.parse(time);
-                startNode.setValue(new Value(ts));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        });
     }
 
     private void initEndValue() {
@@ -209,33 +215,39 @@ public class Watch implements Handler<SubscriptionValue> {
         // Grab the last value
         WatchGroup group = getGroup();
         Splunk splunk = group.getSplunk();
-        Service service = splunk.getService();
+        splunk.getService(new Handler<Service>() {
+            @Override
+            public void handle(Service service) {
+                String query = "search path=\"%s\"";
+                query += "| where time > 0";
+                query += "| head 1";
+                query += "| table time";
+                query = String.format(query, path);
+                Job job = service.search(query);
+                while (!job.isDone()) {
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
 
-        String query = "search path=\"%s\" | where time > 0 | head 1 | table time";
-        query = String.format(query, path);
-        Job job = service.search(query);
-        while (!job.isDone()) {
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                JobResultsArgs args = new JobResultsArgs();
+                args.setOutputMode(JobResultsArgs.OutputMode.XML);
+
+                InputStream results = job.getResults(args);
+                try {
+                    ResultsReader reader = new ResultsReaderXml(results);
+                    Event e = reader.getNextEvent();
+                    if (e != null) {
+                        long time = Long.parseLong(e.get("time"));
+                        endNode.setValue(new Value(TimeParser.parse(time)));
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
-        }
-
-        JobResultsArgs args = new JobResultsArgs();
-        args.setOutputMode(JobResultsArgs.OutputMode.XML);
-
-        InputStream results = job.getResults(args);
-        try {
-            ResultsReader reader = new ResultsReaderXml(results);
-            Event e = reader.getNextEvent();
-            if (e != null) {
-                long time = Long.parseLong(e.get("time"));
-                endNode.setValue(new Value(TimeParser.parse(time)));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        });
     }
 
     static {

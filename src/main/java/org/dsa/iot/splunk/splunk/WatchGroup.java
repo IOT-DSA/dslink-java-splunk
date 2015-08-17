@@ -335,24 +335,28 @@ public class WatchGroup {
         this.loggingType = type;
     }
 
-    private void dbWrite(PathValuePair pair) {
+    private void dbWrite(final PathValuePair pair) {
         String path = pair.getPath();
         Value value = pair.getValue();
         long time = value.getDate().getTime();
 
-        JsonObject obj = new JsonObject();
+        final JsonObject obj = new JsonObject();
         obj.putNumber("timestamp", time);
         obj.putString("path", path);
         ValueUtils.toJson(obj, "value", value);
 
-        try {
-            OutputStreamWriter writer = splunk.getWriter();
-            writer.write(obj.encode());
-            writer.write("\r\n");
-            writer.flush();
-        } catch (Exception e) {
-            splunk.kill();
-            dbWrite(pair);
-        }
+        splunk.getWriter(new Handler<OutputStreamWriter>() {
+            @Override
+            public void handle(OutputStreamWriter writer) {
+                try {
+                    writer.write(obj.encode());
+                    writer.write("\r\n");
+                    writer.flush();
+                } catch (Exception e) {
+                    dbWrite(pair);
+                    throw new RuntimeException(e);
+                }
+            }
+        });
     }
 }

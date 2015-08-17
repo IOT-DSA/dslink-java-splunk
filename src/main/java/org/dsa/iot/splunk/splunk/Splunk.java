@@ -12,7 +12,6 @@ import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.splunk.actions.CreateWatchGroupAction;
 import org.dsa.iot.splunk.actions.QueryAction;
 import org.dsa.iot.splunk.utils.LinkPair;
-import org.slf4j.*;
 import org.vertx.java.core.Handler;
 
 import java.io.IOException;
@@ -26,12 +25,10 @@ import java.util.Map;
  */
 public class Splunk {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Splunk.class);
     private LinkPair pair;
     private Node node;
 
-    private ServiceArgs args;
-    private Service svc;
+    private ClientReceiver clientReceiver;
     private String input;
     private OutputStreamWriter writer;
     private boolean running = true;
@@ -45,13 +42,13 @@ public class Splunk {
 
     public void stop() {
         running = false;
+        clientReceiver.shutdown();
         if (writer != null) {
             try {
                 writer.close();
             } catch (IOException ignored) {
             }
         }
-        kill();
     }
 
     public boolean isRunning() {
@@ -92,7 +89,7 @@ public class Splunk {
             builder.build();
         }
 
-        args = new ServiceArgs();
+        ServiceArgs args = new ServiceArgs();
         args.setScheme(node.getConfig("ssl").getBool() ? "https" : "http");
         args.setHost(node.getConfig("host").getString());
         args.setPort(node.getConfig("port").getNumber().intValue());
@@ -108,6 +105,8 @@ public class Splunk {
                 args.setPassword(new String(b));
             }
         }
+
+        clientReceiver = new ClientReceiver(args);
 
         Value vIn = node.getConfig("input");
         if (vIn != null) {
@@ -128,58 +127,32 @@ public class Splunk {
         }
     }
 
-    public Service getService() {
-        if (!running) {
-            return null;
-        }
-        if (svc == null) {
-            boolean thrown = true;
-            while (thrown) {
-                try {
-                    svc = Service.connect(args);
-                    thrown = false;
+    public void getService(Handler<Service> onServiceReceived) {
+        clientReceiver.get(onServiceReceived, false);
+    }
 
-                    String host = (String) args.get("host");
-                    host += ":" + args.get("port");
-                    LOGGER.info("Connected to splunk ({})", host);
-                } catch (Exception ex) {
-                    LOGGER.warn("Failed to connect to splunk");
-                    thrown = true;
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException ignored) {
-                    }
+    public void getWriter(final Handler<OutputStreamWriter> onWriterReceived) {
+        if (!writerEnabled) {
+            return;
+        }
+        if (writer != null) {
+            onWriterReceived.handle(writer);
+            return;
+        }
+
+        getService(new Handler<Service>() {
+            @Override
+            public void handle(Service svc) {
+                try {
+                    TcpInput in = (TcpInput) svc.getInputs().get(input);
+                    Socket sock = in.attach();
+                    OutputStream stream = sock.getOutputStream();
+                    writer = new OutputStreamWriter(stream, "UTF-8");
+                    onWriterReceived.handle(writer);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
             }
-        }
-        return svc;
-    }
-
-    public void kill() {
-        svc = null;
-    }
-
-    public OutputStreamWriter getWriter() {
-        if (!(running || writerEnabled)) {
-            return null;
-        }
-        if (svc == null) {
-            svc = getService();
-        } else if (writer != null) {
-            return writer;
-        }
-
-        try {
-            TcpInput in = (TcpInput) svc.getInputs().get(input);
-            Socket sock = in.attach();
-            OutputStream stream = sock.getOutputStream();
-            return writer = new OutputStreamWriter(stream, "UTF-8");
-        } catch (IOException e) {
-            try {
-                Thread.sleep(4000);
-            } catch (InterruptedException ignored) {
-            }
-            return getWriter();
-        }
+        });
     }
 }
