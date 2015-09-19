@@ -91,7 +91,7 @@ public class QueryAction implements Handler<ActionResult> {
 
             @Override
             public void run() {
-                final List<String> names = new ArrayList<>();
+                final List<String> prevCols = new ArrayList<>();
                 final List<Parameter> cols = new LinkedList<>();
                 splunk.getService(new Handler<Service>() {
                     @Override
@@ -111,7 +111,6 @@ public class QueryAction implements Handler<ActionResult> {
                             } else if (!splunk.isRunning()) {
                                 break;
                             }
-                            List<Parameter> added = null;
                             BatchRow row = null;
                             if (windowSend) {
                                 row = new BatchRow();
@@ -121,15 +120,7 @@ public class QueryAction implements Handler<ActionResult> {
                                     row = null;
                                     break;
                                 }
-                                List<Parameter> tmp = setColumns(names, cols, table, e);
-                                if (!windowSend) {
-                                    if (added != null && tmp != null) {
-                                        added.addAll(tmp);
-                                    } else {
-                                        added = tmp;
-                                    }
-                                }
-
+                                List<Parameter> added = setColumns(prevCols, cols, e);
                                 if (windowSend && row != null) {
                                     row.addRow(processRow(cols, e));
                                 } else {
@@ -151,20 +142,19 @@ public class QueryAction implements Handler<ActionResult> {
 
     private List<Parameter> setColumns(List<String> names,
                             List<Parameter> cols,
-                            Table table,
                             Event event) {
         List<Parameter> added = null;
         for (String s : event.keySet()) {
-            if (!names.contains(s)) {
-                names.add(s);
-                Parameter p = new Parameter(s, ValueType.STRING);
-                table.addColumn(p);
-                cols.add(p);
-                if (added == null) {
-                    added = new LinkedList<>();
-                }
-                added.add(p);
+            if (names.contains(s)) {
+                continue;
             }
+            names.add(s);
+            Parameter p = new Parameter(s, ValueType.STRING);
+            cols.add(p);
+            if (added == null) {
+                added = new LinkedList<>();
+            }
+            added.add(p);
         }
         return added;
     }
