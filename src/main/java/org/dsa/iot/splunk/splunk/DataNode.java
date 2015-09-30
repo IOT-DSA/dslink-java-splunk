@@ -10,7 +10,7 @@ import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;
 import org.dsa.iot.splunk.actions.GetHistory;
 import org.dsa.iot.splunk.utils.LinkPair;
-import org.vertx.java.core.Handler;
+import org.dsa.iot.dslink.util.handler.Handler;
 
 import java.util.Map;
 

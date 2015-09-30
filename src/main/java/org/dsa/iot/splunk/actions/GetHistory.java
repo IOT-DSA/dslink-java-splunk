@@ -9,11 +9,11 @@ import org.dsa.iot.dslink.node.actions.table.Table;
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;
 import org.dsa.iot.dslink.node.value.ValueUtils;
+import org.dsa.iot.dslink.util.json.JsonObject;
 import org.dsa.iot.splunk.splunk.Splunk;
 import org.dsa.iot.splunk.stats.Interval;
 import org.dsa.iot.splunk.utils.TimeParser;
-import org.vertx.java.core.Handler;
-import org.vertx.java.core.json.JsonObject;
+import org.dsa.iot.dslink.util.handler.Handler;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -74,8 +74,8 @@ public class GetHistory implements Handler<ActionResult> {
                         for (Event e : res) {
                             JsonObject obj = new JsonObject(e.get("_raw"));
 
-                            long ms = obj.getLong("time");
-                            Object v = obj.getField("value");
+                            long ms = obj.get("time");
+                            Object v = obj.get("value");
                             Value val = ValueUtils.toValue(v);
 
                             if (interval == null) {
@@ -106,18 +106,7 @@ public class GetHistory implements Handler<ActionResult> {
     public static Action make(Node data, Node parent, Splunk splunk) {
         Action a =  new Action(Permission.READ, new GetHistory(data, splunk));
         initProfile(parent, a);
-        //a.setHidden(true);
         return a;
-    }
-
-    public static void initProfile(Node node) {
-        Action act = new Action(Permission.READ, new Handler<ActionResult>() {
-            @Override
-            public void handle(ActionResult event) {
-            }
-        });
-
-        initProfile(node, act);
     }
 
     private static void initProfile(Node node, Action act) {

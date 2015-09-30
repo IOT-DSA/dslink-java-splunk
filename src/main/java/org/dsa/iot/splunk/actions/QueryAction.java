@@ -13,7 +13,7 @@ import org.dsa.iot.dslink.node.actions.table.Table;
 import org.dsa.iot.dslink.node.value.*;
 import org.dsa.iot.dslink.util.Objects;
 import org.dsa.iot.splunk.splunk.Splunk;
-import org.vertx.java.core.Handler;
+import org.dsa.iot.dslink.util.handler.Handler;
 
 import java.io.IOException;
 import java.io.InputStream;

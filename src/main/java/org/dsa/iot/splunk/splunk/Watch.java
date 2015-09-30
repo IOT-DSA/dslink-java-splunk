@@ -14,7 +14,7 @@ import org.dsa.iot.splunk.utils.PathValuePair;
 import org.dsa.iot.splunk.utils.TimeParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.vertx.java.core.Handler;
+import org.dsa.iot.dslink.util.handler.Handler;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -98,7 +98,7 @@ public class Watch implements Handler<SubscriptionValue> {
         realTimeNode.setValue(value);
 
         LOGGER.debug("Received update for {} of {}", path, sValue);
-        long time = TimeParser.parse(event.getTimestamp());
+        long time = TimeParser.parse(value.getTimeStamp());
         getGroup().write(new PathValuePair(this, path, value, time));
     }
 

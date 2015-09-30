@@ -12,13 +12,13 @@ import org.dsa.iot.dslink.node.value.ValuePair;
 import org.dsa.iot.dslink.node.value.ValueType;
 import org.dsa.iot.dslink.node.value.ValueUtils;
 import org.dsa.iot.dslink.util.Objects;
+import org.dsa.iot.dslink.util.json.JsonObject;
 import org.dsa.iot.splunk.actions.watch.AddWatchAction;
 import org.dsa.iot.splunk.utils.LinkPair;
 import org.dsa.iot.splunk.utils.LoggingType;
 import org.dsa.iot.splunk.utils.PathValuePair;
 import org.dsa.iot.splunk.utils.TimeParser;
-import org.vertx.java.core.Handler;
-import org.vertx.java.core.json.JsonObject;
+import org.dsa.iot.dslink.util.handler.Handler;
 
 import java.io.OutputStreamWriter;
 import java.util.*;
@@ -341,8 +341,8 @@ public class WatchGroup {
         long time = value.getDate().getTime();
 
         final JsonObject obj = new JsonObject();
-        obj.putNumber("timestamp", time);
-        obj.putString("path", path);
+        obj.put("timestamp", time);
+        obj.put("path", path);
         ValueUtils.toJson(obj, "value", value);
 
         splunk.getWriter(new Handler<OutputStreamWriter>() {

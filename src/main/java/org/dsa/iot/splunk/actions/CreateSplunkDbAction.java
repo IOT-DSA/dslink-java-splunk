@@ -11,7 +11,7 @@ import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;
 import org.dsa.iot.splunk.splunk.Splunk;
 import org.dsa.iot.splunk.utils.LinkPair;
-import org.vertx.java.core.Handler;
+import org.dsa.iot.dslink.util.handler.Handler;
 
 /**
  * @author Samuel Grenier

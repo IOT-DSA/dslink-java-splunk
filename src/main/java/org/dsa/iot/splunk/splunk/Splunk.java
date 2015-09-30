@@ -12,7 +12,7 @@ import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.splunk.actions.CreateWatchGroupAction;
 import org.dsa.iot.splunk.actions.QueryAction;
 import org.dsa.iot.splunk.utils.LinkPair;
-import org.vertx.java.core.Handler;
+import org.dsa.iot.dslink.util.handler.Handler;
 
 import java.io.IOException;
 import java.io.OutputStream;

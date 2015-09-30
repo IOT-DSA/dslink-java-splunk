@@ -1,11 +1,9 @@
 package org.dsa.iot.splunk.stats;
 
 import org.dsa.iot.dslink.node.actions.table.Row;
-import org.dsa.iot.dslink.node.actions.table.Table;
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.splunk.stats.rollup.*;
 import org.dsa.iot.splunk.utils.TimeParser;
-import org.vertx.java.core.json.JsonArray;
 
 import java.util.Calendar;
 import java.util.TimeZone;
