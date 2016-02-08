@@ -104,8 +104,8 @@ public class WatchGroup {
                 Watch w = pair.getWatch();
                 Value vCurr = w.getDataNode().getValue();
                 Value vUpdate = pair.getValue();
-                long curr = (vCurr == null) ? 0 : vCurr.getDate().getTime();
-                long update = (vUpdate == null) ? 0 : vUpdate.getDate().getTime();
+                long curr = (vCurr == null) ? 0 : vCurr.getTime();
+                long update = (vUpdate == null) ? 0 : vUpdate.getTime();
 
                 if ((vCurr != null) && (curr != update)) {
                     doWrite = true;
@@ -287,8 +287,7 @@ public class WatchGroup {
                             watch.initStartValue();
                             watch.setLastWrittenValue(value);
 
-                            Date date = value.getDate();
-                            String time = TimeParser.parse(date.getTime());
+                            String time = TimeParser.parse(value.getTime());
                             value = new Value(time);
                             watch.setEndDate(value);
                         }
@@ -338,18 +337,18 @@ public class WatchGroup {
     private void dbWrite(final PathValuePair pair) {
         String path = pair.getPath();
         Value value = pair.getValue();
-        long time = value.getDate().getTime();
+        long time = value.getTime();
 
         final JsonObject obj = new JsonObject();
         obj.put("timestamp", time);
         obj.put("path", path);
-        ValueUtils.toJson(obj, "value", value);
+        obj.put("value", value);
 
         splunk.getWriter(new Handler<OutputStreamWriter>() {
             @Override
             public void handle(OutputStreamWriter writer) {
                 try {
-                    writer.write(obj.encode());
+                    writer.write(new String(obj.encode()));
                     writer.write("\r\n");
                     writer.flush();
                 } catch (Exception e) {
