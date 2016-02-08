@@ -1,5 +1,6 @@
 package org.dsa.iot.splunk.splunk;
 
+import io.netty.util.CharsetUtil;
 import org.dsa.iot.dslink.link.Requester;
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.NodeBuilder;
@@ -348,7 +349,7 @@ public class WatchGroup {
             @Override
             public void handle(OutputStreamWriter writer) {
                 try {
-                    writer.write(new String(obj.encode()));
+                    writer.write(new String(obj.encode(), CharsetUtil.UTF_8));
                     writer.write("\r\n");
                     writer.flush();
                 } catch (Exception e) {
