@@ -6,7 +6,7 @@ apply plugin: 'idea'
 mainClassName = 'org.dsa.iot.splunk.Main'
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
-version = '0.0.1-SNAPSHOT'
+version = '0.0.2-SNAPSHOT'
 
 repositories {
     mavenCentral()
@@ -30,8 +30,8 @@ idea {
 
 dependencies {
     provided 'com.google.code.findbugs:annotations:3.0.0'
-    compile 'org.iot-dsa:dslink:0.14.1'
-    compile 'org.iot-dsa:commons:0.14.1'
+    compile 'org.iot-dsa:dslink:0.16.0'
+    compile 'org.iot-dsa:commons:0.16.0'
 
     // Splunk dependencies
     compile 'com.splunk:splunk:1.4.0.0'
